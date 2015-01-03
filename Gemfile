@@ -5,13 +5,17 @@ ruby '2.1.5'
 gem 'rack'
 gem 'sinatra'
 gem 'redis'
+gem 'connection_pool'
 gem 'rack-cors'
+gem 'omniauth'
+gem 'omniauth-google-oauth2'
 
 gem 'capistrano'
 gem 'capistrano-passenger'
 
 group :development do
   gem 'dotenv'
+  gem 'rspec'
 end
 
 group :production do

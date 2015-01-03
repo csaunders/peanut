@@ -1,20 +1,29 @@
+$LOAD_PATH.unshift(File.dirname(__FILE__))
+
 require 'sinatra/base'
 require 'rack/cors'
+require 'omniauth'
+require 'omniauth-google-oauth2'
 require 'dotenv'
 
 require 'user'
 require 'typo'
+require 'auth'
 
 Dotenv.load
 
-use Rack::Cors do
-  allow do
-    origins '*'
-    resource '/typo/*', headers: :any, methods: :post
-  end
-end
-
 class PeanutApp < Sinatra::Base
+  use Rack::Cors do
+    allow do
+      origins '*'
+      resource '/typo/*', headers: :any, methods: :post
+    end
+  end
+
+  use OmniAuth::Builder do
+    provider :google_oauth2, ENV['GOOGLE_CLIENT_ID'], ENV['GOOGLE_CLIENT_SECRET']
+  end
+
   enable :sessions
   set :session_secret, ENV['SESSION_SECRET']
 
@@ -22,23 +31,67 @@ class PeanutApp < Sinatra::Base
   set :views, settings.root + '/views'
 
   # Brochure
-  get '/' { erb :index }
+  get '/' do; erb :index; end
 
   # Authentication
-  get '/login' { erb :login }
+  get '/auth/failure' do; erb :auth_failure; end
 
-  post '/login' do
+  get '/auth/:provider/callback' do
+    uid = auth.login(request.env['omniauth.auth'])
+    user = User.new(uid)
+    user.save
+
+    redirect to('/admin')
   end
 
   post '/logout' do
+    auth.logout
+    redirect to('/')
   end
 
   # Logged In
-  get '/typos' do
+  before '/admin/*' do
+    authenticate!
+  end
+
+  get '/admin' do
+    "Welcome #{session[:uid]}!"
+  end
+
+  get '/admin/typos' do
+  end
+
+  get '/admin/typos/:fingerprint' do
+  end
+
+  get '/admin/sites' do
+  end
+
+  post '/admin/sites' do
+  end
+
+  delete '/admin/sites/:uuid' do
   end
 
   # Typo Submission
-  post '/typo/:uuid' do
+  post '/typos/:uuid' do
+  end
+
+  private
+  def auth
+    @auth ||= Auth.new(session)
+  end
+
+  def user
+    @user ||= User.find(session[:uid])
+  end
+
+  def logged_in?
+    not @user.nil?
+  end
+
+  def authenticate!
+    redirect to('/') unless logged_in?
   end
 end
 
