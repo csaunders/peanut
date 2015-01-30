@@ -3,16 +3,16 @@ require 'site'
 require 'user'
 
 RSpec.describe 'Site' do
-  before(:each) do
-    Storage.factory = ->(){ MockStorage.new }
+  before(:example) do
+    Storage.factory = MemoryStorage.builder
   end
 
-  after(:each) do
-    MockStorage.clear!
+  after(:example) do
+    MemoryStorage.clear!
     Storage.factory = nil
   end
 
-  let(:storage) { MockStorage.new }
+  let(:storage) { MemoryStorage.new }
   let(:user) { object_double(User.new('abracadabra'), uid: 'abracadabra')}
   let(:site) { Site.new(owner: user, url: 'http://example.com', token: 'slowpoke') }
 
@@ -25,8 +25,8 @@ RSpec.describe 'Site' do
 
     context 'user who has sites stored' do
       it 'returns an array of sites' do
-        storage.container['sites:abracadabra'] = [site.token]
-        storage.container["sites:#{site.token}"] = site.marshal
+        storage.append('sites:abracadabra', site.token)
+        storage.set("sites:#{site.token}", site.marshal)
         expect(Site.all_for(user)).to eq([site])
       end
     end
@@ -40,8 +40,8 @@ RSpec.describe 'Site' do
     context 'user who owns the site' do
       let(:site2) { Site.new(owner: user, url: 'http://other.example.com', token: 'gengar') }
       it 'gives the user site details' do
-        storage.container['sites:abracadabra'] = [site.token, site2.token]
-        storage.container["sites:#{site2.token}"] = site2.marshal
+        storage.append('sites:abracadabra', site.token, site2.token)
+        storage.set("sites:#{site2.token}", site2.marshal)
         expect(Site.find_for(user, 'gengar')).to eq(site2)
       end
     end

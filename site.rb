@@ -8,7 +8,8 @@ class Site
 
   def self.all_for(owner, limit: [0, 10])
     Storage.connect do |conn|
-      conn.sort("sites:#{owner.uid}", limit: limit).map do |token|
+      sites = conn.get("sites:#{owner.uid}") || []
+      sites.map do |token|
         find_for_with_connection(owner, token, conn)
       end
     end
@@ -47,7 +48,7 @@ class Site
   def save
     Storage.transaction do |conn|
       conn.set("sites:#{token}", marshal)
-      conn.sadd("sites:#{owner.uid}", token)
+      conn.append("sites:#{owner.uid}", token)
     end
   end
 

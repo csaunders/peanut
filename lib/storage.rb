@@ -1,5 +1,6 @@
 require 'redis'
 require 'connection_pool'
+require 'storage/memory'
 
 class Storage
   def self.default_factory
@@ -21,14 +22,14 @@ class Storage
 
   def self.transaction
     connect do |conn|
-      conn.multi do |multi|
+      conn.exec do |multi|
         yield(multi)
       end
     end
   end
 
   def pool
-    $redis ||= ConnectionPool.new(size: ENV['MAX_CONNECTIONS'].to_i, timeout: ENV['CONNECTION_TIMEOUT'].to_i) do
+    $storage ||= ConnectionPool.new(size: ENV['MAX_CONNECTIONS'].to_i, timeout: ENV['CONNECTION_TIMEOUT'].to_i) do
       Storage.factory.call
     end
   end

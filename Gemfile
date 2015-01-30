@@ -16,6 +16,7 @@ gem 'capistrano-passenger'
 group :development do
   gem 'dotenv'
   gem 'rspec'
+  gem 'cucumber'
 end
 
 group :production do

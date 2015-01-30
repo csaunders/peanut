@@ -4,15 +4,15 @@ require 'user'
 
 RSpec.describe 'Typo' do
   before(:each) do
-    Storage.factory = ->(){ MockStorage.new }
+    Storage.factory = ->(){ MemoryStorage.new }
   end
 
   after(:each) do
-    MockStorage.clear!
+    MemoryStorage.clear!
     Storage.factory = nil
   end
 
-  let(:storage) { MockStorage.new }
+  let(:storage) { MemoryStorage.new }
   let(:user) { object_double(User.new('alakazam'), uid: 'alakazam')}
   let(:typo) { Typo.new(contents: 'charmndr', url: 'http://example.com/article', fingerprint: 'abracadabra', context: 'You have discovered <typo>. Charmander is a fire type pokemon.')}
 
