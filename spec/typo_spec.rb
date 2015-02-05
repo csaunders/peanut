@@ -14,7 +14,7 @@ RSpec.describe 'Typo' do
 
   let(:storage) { MemoryStorage.new }
   let(:user) { object_double(User.new('alakazam'), uid: 'alakazam')}
-  let(:typo) { Typo.new(contents: 'charmndr', url: 'http://example.com/article', fingerprint: 'abracadabra', context: 'You have discovered <typo>. Charmander is a fire type pokemon.')}
+  let(:typo) { Typo.new(owner: user, contents: 'charmndr', url: 'http://example.com/article', fingerprint: 'abracadabra', context: 'You have discovered <typo>. Charmander is a fire type pokemon.')}
 
   describe '#all_for' do
   end
@@ -71,6 +71,17 @@ RSpec.describe 'Typo' do
     end
   end
 
+  describe 'unique?' do
+    it 'is unique if a record with the same fingerprint does not exist in storage' do
+      expect(typo.unique?).to be_truthy
+    end
+
+    it 'is not unique if a record with the same fingerprint is already in storage' do
+      expect(typo.save).to be_truthy
+      expect(Typo.new(owner: user, fingerprint: typo.fingerprint, url: '', contents: '', context: '').unique?).to be_falsy
+    end
+  end
+
 
   describe '.to_hash' do
   end
@@ -80,11 +91,23 @@ RSpec.describe 'Typo' do
 
   describe '.save' do
     context 'when the data is valid' do
-      xit 'adds an entry to the users typos set'
+      it 'adds an entry to the users typos set' do
+        typo = Typo.new(context: 'hello <typo>!!', url: 'http://example.com/foobar', contents: 'wolrd', fingerprint: 'hello', owner: user)
+        expect(typo.save).to be_truthy
+        expect(storage.get("typos:#{user.uid}").size).to be(1)
+      end
 
-      xit 'does not add an entry if the data already exists'
+      it 'does not add an entry if the data already exists' do
+        Typo.new(context: 'hello <typo>!!', url: 'http://example.com/foobar', contents: 'wolrd', fingerprint: 'hello', owner: user).save
+        typo = Typo.new(context: 'hello <typo>!!', url: 'http://example.com/foobar', contents: 'wolrd', fingerprint: 'hello', owner: user)
+        expect(typo.save).to be_falsy
+        expect(storage.get("typos:#{user.uid}").size).to be(1)
+      end
     end
 
-    xit 'does not save if it does not have an owner'
+    it 'does not save if it does not have an owner' do
+      typo = Typo.new(context: 'hello <typo>!!', url: 'http://example.com/foobar', contents: 'wolrd', fingerprint: 'hello')
+      expect(typo.save).to be_falsy
+    end
   end
 end

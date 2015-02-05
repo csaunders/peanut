@@ -132,6 +132,18 @@ RSpec.describe 'MemoryStorage' do
     end
   end
 
+  describe 'empty?' do
+    it 'should return true if storage contains nothing' do
+      ExposedMemoryStorage.storage = {}
+      expect(storage.empty?).to be(true)
+    end
+
+    it 'should return false if storage contains something' do
+      ExposedMemoryStorage.storage = {'key' => 'value'}
+      expect(storage.empty?).to be(false)
+    end
+  end
+
   describe 'exec' do
     it 'should run multiple commands' do
       storage.exec do

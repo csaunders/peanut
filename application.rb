@@ -6,11 +6,13 @@ require 'omniauth'
 require 'omniauth-google-oauth2'
 require 'dotenv'
 
+require 'lib/storage'
 require 'user'
 require 'typo'
 require 'auth'
 
 Dotenv.load
+Storage.factory = Object.const_get(ENV['STORAGE_CONTAINER']).builder
 
 class PeanutApp < Sinatra::Base
   use Rack::Cors do
@@ -55,7 +57,14 @@ class PeanutApp < Sinatra::Base
   end
 
   get '/admin' do
-    "Welcome #{session[:uid]}!"
+    """
+    <p>Welcome #{session[:uid]}!</p>
+
+    <ul>
+      <li><a href=\"/admin/typos\">Check out Reported Typos</a></li>
+      <li><a href=\"/admin/sites\">Manage Sites</a></li>
+    </ul>
+    """
   end
 
   get '/admin/typos' do
@@ -87,7 +96,7 @@ class PeanutApp < Sinatra::Base
   end
 
   def logged_in?
-    not @user.nil?
+    not user.nil?
   end
 
   def authenticate!

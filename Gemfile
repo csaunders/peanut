@@ -17,6 +17,8 @@ group :development do
   gem 'dotenv'
   gem 'rspec'
   gem 'cucumber'
+  gem 'pry'
+  gem 'pry-byebug'
 end
 
 group :production do

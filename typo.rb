@@ -21,4 +21,19 @@ class Typo
   def fingerprint_contents
     RequiredFields.map { |f| public_send(f) }.join(':')
   end
+
+  def unique?
+    Storage.connect do |conn|
+      conn.get("typos:#{owner.uid}:#{fingerprint}").nil?
+    end
+  end
+
+  def save
+    return unless owner && unique?
+    Storage.connect do |conn|
+      conn.set("typos:#{owner.uid}:#{fingerprint}", self)
+      conn.append("typos:#{owner.uid}", fingerprint)
+    end
+    true
+  end
 end

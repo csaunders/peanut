@@ -48,6 +48,10 @@ class MemoryStorage
     instance_eval(&blk)
   end
 
+  def empty?
+    storage.empty?
+  end
+
   private
   def storage
     @@storage
