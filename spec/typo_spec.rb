@@ -17,6 +17,10 @@ RSpec.describe 'Typo' do
   let(:typo) { Typo.new(owner: user, contents: 'charmndr', url: 'http://example.com/article', fingerprint: 'abracadabra', context: 'You have discovered <typo>. Charmander is a fire type pokemon.')}
 
   describe '#all_for' do
+    it "should return all the typos for a user" do
+      typo.save
+      expect(Typo.all_for(user)).to eq([typo])
+    end
   end
 
   describe '#unmarshal' do

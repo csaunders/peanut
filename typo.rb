@@ -5,6 +5,15 @@ class Typo
 
   RequiredFields = %i(contents context url).sort
 
+  def self.all_for(user)
+    results = []
+    Storage.connect do |conn|
+      results = conn.get("typos:#{user.uid}").map do |fingerprint|
+        conn.get("typos:#{user.uid}:#{fingerprint}")
+      end
+    end
+  end
+
   def initialize(args={})
     args.each do |k,v|
       public_send("#{k}=", v) if respond_to?(k)
