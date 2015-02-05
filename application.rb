@@ -10,9 +10,11 @@ require 'lib/storage'
 require 'user'
 require 'typo'
 require 'auth'
+require 'seeds'
 
 Dotenv.load
 Storage.factory = Object.const_get(ENV['STORAGE_CONTAINER']).builder
+Seeds.call
 
 class PeanutApp < Sinatra::Base
   use Rack::Cors do
@@ -57,17 +59,22 @@ class PeanutApp < Sinatra::Base
   end
 
   get '/admin' do
+    typos = Typo.all_for(user)
     """
     <p>Welcome #{session[:uid]}!</p>
 
     <ul>
-      <li><a href=\"/admin/typos\">Check out Reported Typos</a></li>
+      <li><a href=\"/admin/typos\">Check out #{typos.size} Reported Typos</a></li>
       <li><a href=\"/admin/sites\">Manage Sites</a></li>
     </ul>
     """
   end
 
   get '/admin/typos' do
+    typos = Typo.all_for(user).map do |typo|
+      "<li>#{typo.contents} at around #{typo.context}</li>"
+    end
+    "<ul>#{typos.join}</ul>"
   end
 
   get '/admin/typos/:fingerprint' do
