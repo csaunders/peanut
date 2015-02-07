@@ -21,7 +21,7 @@ class Site
     end
   end
 
-  def self.find_for(owner, token, conn=nil)
+  def self.find_for(owner, token)
     Storage.connect { |c| find_for_with_connection(owner, token, c)}
   end
 
@@ -63,6 +63,13 @@ class Site
     end
   end
 
+  def remove
+    Storage.transaction do |conn|
+      conn.del("sites:#{token}")
+      conn.remove("sites:#{owner.uid}", token)
+    end
+  end
+
   def ==(other)
     [:owner, :url, :token].all? { |k| self.public_send(k) == other.public_send(k) }
   end
@@ -71,16 +78,16 @@ class Site
     errors.empty?
   end
 
-  private
-  def validate!
-    raise SerializationError, "Invalid Site:\n#{errors.join("\n")}" unless errors.empty?
-  end
-
   def errors
     errors = []
     errors << "Url cannot be blank" unless url
     errors << "Token cannot be blank" unless token
     errors
+  end
+
+  private
+  def validate!
+    raise SerializationError, "Invalid Site:\n#{errors.join("\n")}" unless errors.empty?
   end
 
   def generate_token

@@ -109,4 +109,13 @@ RSpec.describe 'Site' do
       expect(Site.all_for(user)).to eq([site])
     end
   end
+
+  describe '.remove' do
+    it 'removes an entry from the users sites set' do
+      site.save
+      expect(Site.all_for(user).length).to eq(1)
+      site.remove
+      expect(Site.all_for(user).length).to eq(0)
+    end
+  end
 end

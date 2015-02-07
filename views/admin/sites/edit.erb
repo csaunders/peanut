@@ -1,0 +1,9 @@
+<form method="post" action="/admin/sites">
+  <label name="url">Site URL</label>
+  <input
+    type="text"
+    name="url"
+    placeholder="http://yoursite.com"
+    value="<%= @site.url %>">
+  <input type="submit" value="Add Site">
+</form>

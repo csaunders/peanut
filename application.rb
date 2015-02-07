@@ -1,6 +1,8 @@
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 
 require 'sinatra/base'
+require 'sinatra/flash'
+require 'sinatra/reloader'
 require 'rack/cors'
 require 'omniauth'
 require 'omniauth-google-oauth2'
@@ -10,6 +12,7 @@ require 'lib/storage'
 require 'lib/workers'
 require 'user'
 require 'typo'
+require 'site'
 require 'auth'
 require 'seeds'
 
@@ -18,6 +21,13 @@ Storage.factory = Object.const_get(ENV['STORAGE_CONTAINER']).builder
 Seeds.call unless ENV['RACK_ENV'] == 'test'
 
 class PeanutApp < Sinatra::Base
+  register Sinatra::Flash
+
+  configure :development do
+    register Sinatra::Reloader
+  end
+
+  use Rack::MethodOverride
   use Rack::Cors do
     allow do
       origins '*'
@@ -55,39 +65,60 @@ class PeanutApp < Sinatra::Base
   end
 
   # Logged In
-  before '/admin/*' do
+  before '/admin*' do
     authenticate!
   end
 
   get '/admin' do
-    typos = Typo.all_for(user)
-    """
-    <p>Welcome #{session[:uid]}!</p>
-
-    <ul>
-      <li><a href=\"/admin/typos\">Check out #{typos.size} Reported Typos</a></li>
-      <li><a href=\"/admin/sites\">Manage Sites</a></li>
-    </ul>
-    """
+    @typos = Typo.all_for(user)
+    admin_layout 'admin/index'
   end
 
   get '/admin/typos' do
-    typos = Typo.all_for(user).map do |typo|
-      "<li>#{typo.contents} at around #{typo.context}</li>"
-    end
-    "<ul>#{typos.join}</ul>"
+    @typos = Typo.all_for(user)
+    admin_layout 'admin/typos/index'
   end
 
   get '/admin/typos/:fingerprint' do
   end
 
   get '/admin/sites' do
+    @sites = Site.all_for(user)
+    admin_layout 'admin/sites/index'
+  end
+
+  get '/admin/sites/new' do
+    admin_layout 'admin/sites/new'
   end
 
   post '/admin/sites' do
+    site = Site.new(owner: user, url: params[:url])
+    if site.valid? && site.save
+      flash[:notice] = "Successfully Added #{site.url}"
+      redirect to("/admin/sites")
+    else
+      flash[:error] = site.errors
+      redirect to('/admin/sites/new')
+    end
   end
 
   delete '/admin/sites/:token' do
+    site = Site.find_for(user, params[:token])
+    site.remove
+    flash[:notice] = "Removed typo reporting for #{site.url}"
+    redirect to('/admin/sites')
+  end
+
+  get '/admin/sites/:token/edit' do
+    @site = Site.find_for(user, params[:token])
+    admin_layout "admin/sites/edit"
+  end
+
+  put '/admin/sites/:token' do
+    @site = Site.find_for(user, params[:token])
+    @site.url = params[:url]
+    @site.save
+    redirect to("/admin/sites/#{site.token}")
   end
 
   # Typo Submission
@@ -113,6 +144,10 @@ class PeanutApp < Sinatra::Base
 
   def authenticate!
     redirect to('/') unless logged_in?
+  end
+
+  def admin_layout(template)
+    erb template.to_sym, layout: :admin
   end
 end
 

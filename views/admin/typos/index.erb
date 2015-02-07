@@ -1,0 +1,7 @@
+<ul>
+  <% @typos.each do |typo| %>
+    <li>
+      <%= typo.contents %> at around <%= typo.context %>
+    </li>
+  <% end %>
+</ul>

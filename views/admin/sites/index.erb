@@ -1,0 +1,25 @@
+<% if @sites.empty? %>
+  <div class="notice">
+    <p>Looks like you don't have any sites yet.</p>
+    <p><a href="/admin/sites/new">Add a Site</a></p>
+  </div>
+<% else %>
+  <section>Tracked Sites</section>
+  <dl>
+    <% @sites.each do |site| %>
+      <dt>Site</dt>
+      <dd><%= site.url %></dd>
+      <dt>Token</dt>
+      <dd><%= site.token %></dd>
+      <dt>Actions</dt>
+      <dd><a href="/admin/sites/<%= site.token %>/edit">Edit</a></dd>
+      <dd>
+        <form action="/admin/sites/<%= site.token %>" method="post">
+          <input type="hidden" name="_method" value="delete">
+          <input class="remove" type="submit" value="Remove">
+        </form>
+      </dd>
+    <% end %>
+  </dl>
+  <p><a href="/admin/sites/new">Add Another Site</a></p>
+<% end %>
