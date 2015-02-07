@@ -15,6 +15,12 @@ class Site
     end
   end
 
+  def self.find(token)
+    Storage.connect do |conn|
+      unmarshal(conn.get("sites:#{token}") || "")
+    end
+  end
+
   def self.find_for(owner, token, conn=nil)
     Storage.connect { |c| find_for_with_connection(owner, token, c)}
   end
@@ -26,7 +32,12 @@ class Site
   end
 
   def self.unmarshal(site_json)
-    Site.new(JSON.parse(site_json))
+    data = if site_json && site_json.length > 0
+      JSON.parse(site_json)
+    else
+      {}
+    end
+    Site.new(data)
   end
 
   def initialize(args)
@@ -56,13 +67,20 @@ class Site
     [:owner, :url, :token].all? { |k| self.public_send(k) == other.public_send(k) }
   end
 
+  def valid?
+    errors.empty?
+  end
+
   private
   def validate!
+    raise SerializationError, "Invalid Site:\n#{errors.join("\n")}" unless errors.empty?
+  end
+
+  def errors
     errors = []
     errors << "Url cannot be blank" unless url
     errors << "Token cannot be blank" unless token
-
-    raise SerializationError, "Invalid Site:\n#{errors.join("\n")}" unless errors.empty?
+    errors
   end
 
   def generate_token

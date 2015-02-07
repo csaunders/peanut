@@ -1,7 +1,8 @@
 require 'digest'
 
 class Typo
-  attr_accessor :context, :contents, :url, :fingerprint, :owner
+  attr_accessor :context, :contents, :url, :owner
+  attr_writer :fingerprint
 
   RequiredFields = %i(contents context url).sort
 

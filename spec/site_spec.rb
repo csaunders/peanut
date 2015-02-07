@@ -60,6 +60,11 @@ RSpec.describe 'Site' do
       expect(site.url).to eq('http://example.com')
       expect(site.token).to eq('slowpoke')
     end
+
+    it 'returns an blank Site if the JSON string is empty' do
+      site = Site.unmarshal('')
+      expect(site.valid?).to be_falsy
+    end
   end
 
   describe '.initialize' do

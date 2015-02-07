@@ -7,6 +7,7 @@ require 'omniauth-google-oauth2'
 require 'dotenv'
 
 require 'lib/storage'
+require 'lib/workers'
 require 'user'
 require 'typo'
 require 'auth'
@@ -14,7 +15,7 @@ require 'seeds'
 
 Dotenv.load
 Storage.factory = Object.const_get(ENV['STORAGE_CONTAINER']).builder
-Seeds.call
+Seeds.call unless ENV['RACK_ENV'] == 'test'
 
 class PeanutApp < Sinatra::Base
   use Rack::Cors do
@@ -86,11 +87,15 @@ class PeanutApp < Sinatra::Base
   post '/admin/sites' do
   end
 
-  delete '/admin/sites/:uuid' do
+  delete '/admin/sites/:token' do
   end
 
   # Typo Submission
-  post '/typos/:uuid' do
+  post '/typos/:token' do
+    site = Site.find(params[:token])
+    not_found unless site.valid?
+    WorkQueue.add(Workers::TypoReport, params[:typo].merge(token: site.token))
+    status 201
   end
 
   private
